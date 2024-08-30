@@ -1,5 +1,5 @@
 import React from 'react'
-import ProfileForm from '../app/form'
+import ProfileForm from './form'
 
 export default function HomePage() {
   return (

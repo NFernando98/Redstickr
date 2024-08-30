@@ -18,6 +18,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "../firebase"
 
 const formSchema = z.object({
     productName: z.string().min(1, "Product Name is required"),
@@ -36,22 +38,27 @@ export default function ProfileForm() {
     });
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        console.log(values);
         try {
-            const response = await fetch('/save-product', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(values),
+            const formattedValues = {
+                ...values,
+                expirationDate: values.expirationDate ? values.expirationDate.toISOString() : null,
+            };
+            console.log(formattedValues);
+
+            const { productName, expirationDate, category } = formattedValues;
+
+            const docRef = await addDoc(collection(db, "products"), {
+                productName,
+                expirationDate,
+                category,
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to save product');
-            }
-            console.log("Product saved successfully");
+            console.log("Document written with ID: ", docRef.id);
+            // Optionally, you can reset the form after successful submission
+            form.reset(); // Assuming `form` object has a reset function
+
         } catch (error) {
-            console.error("Error saving product: ", error);
+            console.error("Error adding document: ", error);
         }
     }
 

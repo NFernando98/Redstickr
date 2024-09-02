@@ -4,6 +4,7 @@ import ProductCard from '@/components/ProductCard';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import AddProductModal from '@/components/AddProductModal';
 
 interface Product {
   id: string;
@@ -45,8 +46,8 @@ export default async function ProductListPage() {
   return (
     <Navbar>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-4xl font-bold">Expiring Items</h1>
-        <Button variant="outline">+ Add Item</Button>
+        <h1 className="text-4xl font-bold">All Products</h1>
+        <AddProductModal />
       </div>
 
       <Accordion type="single" collapsible className="w-full">

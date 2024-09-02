@@ -1,6 +1,10 @@
+"use client";
+
 import { FC } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+// import UpdateProductModal from './UpdateProductModal';
 
 interface ProductCardProps {
   product: {
@@ -10,6 +14,7 @@ interface ProductCardProps {
     discountType: string;
     itemNumber: string;
     imageUrl?: string;
+    category: string;
   };
 }
 
@@ -28,22 +33,26 @@ const ProductCard: FC<ProductCardProps> = ({ product }) => {
   };
 
   return (
-    <Card className={`mb-4 ${isExpired ? 'border-red-500' : getDiscountColor(product.discountType)}`}>
+    <Card className={`mb-4 ${isExpired ? 'border-red-500' : ''}`}>
       <CardHeader>
-        <CardTitle className="flex justify-between items-center">
+        <CardTitle className="font-bold text-lg mb-1 flex justify-between items-center">
           <span>{product.name}</span>
+          <Badge className={`text-center ${getDiscountColor(product.discountType)}`}>
+            {product.discountType.toUpperCase()}
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4">
         <div className="flex">
           <img src={product.imageUrl || '/placeholder-image.jpg'} alt={product.name} className="w-1/3 h-auto object-cover mr-4"/>
           <div className="flex-1">
-            <p className="font-bold text-lg mb-1">{expirationDate.toLocaleDateString()}</p>
+            <p className="font-bold text-md mb-1">{expirationDate.toLocaleDateString()}</p>
             <p className="text-sm mb-1">{product.itemNumber}</p>
-            {isExpired ? <p className="text-red-500 font-bold">EXPIRED</p> : <p className="text-sm mb-2">{daysLeft} days left</p>}
+            {isExpired ? "" : <p className="text-sm mb-2">{daysLeft} days left</p>}
             <div className="flex space-x-2">
               <Button variant="secondary" size="sm">Delete</Button>
               <Button variant="secondary" size="sm">Update</Button>
+              {/* {product.discountType !== "expired" && <UpdateProductModal product={product}/>} */}
             </div>
           </div>
         </div>

@@ -10,6 +10,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "../firebase"
 
 const formSchema = z.object({
     name: z.string().min(1, "Product Name is required"),
@@ -41,15 +43,25 @@ export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
         try {
             const formattedValues = {
                 ...values,
-                expirationDate: values.expirationDate.toISOString(),
+                expirationDate: values.expirationDate ? values.expirationDate.toISOString() : null,
             };
 
-            console.log(formattedValues);
+            const { name, expirationDate, category, itemNumber, discountType, imageUrl } = formattedValues;
 
-            form.reset();
+            const docRef = await addDoc(collection(db, "products"), {
+                name,
+                expirationDate,
+                category,
+                itemNumber,
+                discountType,
+                imageUrl,
+            });
+
+            console.log("Document written with ID: ", docRef.id);
             if (onSubmitSuccess) {
-                onSubmitSuccess();
+                onSubmitSuccess(); // Optional callback for success handling
             }
+
         } catch (error) {
             console.error("Error adding document: ", error);
         }

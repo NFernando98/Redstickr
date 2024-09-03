@@ -1,14 +1,20 @@
+'use client'
+
 import { FC, ReactNode } from 'react';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
+import { signOut, useSession } from 'next-auth/react'
 
 interface NavbarProps {
   children: ReactNode;
 }
 
 const Navbar: FC<NavbarProps> = ({ children }) => {
+  const session = useSession();
+
   return (
     <div className="min-h-screen bg-gray-100">
+      {session?.data?.user?.name}
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
@@ -26,7 +32,7 @@ const Navbar: FC<NavbarProps> = ({ children }) => {
               </div>
             </div>
             <div className="flex items-center">
-              <Button variant="ghost" className="text-xl">Log out</Button>
+              <Button onClick={() => signOut()} variant="ghost" className="text-xl">Log out</Button>
             </div>
           </div>
         </div>

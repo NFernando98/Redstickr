@@ -4,7 +4,6 @@ import './globals.css';
 import { Inter } from 'next/font/google';
 import SessionProvider from './SessionProvider';
 import Login from '../components/Login';
-import Home from './page';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -23,8 +22,7 @@ export default async function RootLayout({
             <Login />
           ) : (
             <>
-              <Home />
-              {/* Render children here */}
+              {/* Render children based on the route */}
               {children}
             </>
           )}
@@ -33,3 +31,4 @@ export default async function RootLayout({
     </html>
   );
 }
+

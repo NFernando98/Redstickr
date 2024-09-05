@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import ProductCard from '@/components/ProductCard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Product } from '../types/product';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/firebase';
+import { useSession } from 'next-auth/react'; // Import useSession from next-auth
 
 interface GroupedProducts {
     [category: string]: {
@@ -14,18 +15,35 @@ interface GroupedProducts {
 }
 
 export default function ProductList() {
+    const { data: session } = useSession(); // Get session data
     const [products, setProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
+        if (!session?.user?.email) {
+            setLoading(false);
+            return;
+        }
+
+        const userEmail = session.user.email;
+
+        // Query products for the logged-in user's email
+        const productsQuery = query(collection(db, "products"), where("userEmail", "==", userEmail));
+
         // Set up a real-time listener
-        const unsubscribe = onSnapshot(collection(db, "products"), (snapshot) => {
+        const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
             const productsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Product[];
             setProducts(productsList);
+            setLoading(false);
         });
 
         // Cleanup listener on unmount
         return () => unsubscribe();
-    }, []);
+    }, [session?.user?.email]);
+
+    if (loading) {
+        return <div>Loading products...</div>;
+    }
 
     // Group products by category and discount type
     const groupedProducts: GroupedProducts = products.reduce((acc: GroupedProducts, product) => {

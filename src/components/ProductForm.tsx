@@ -1,4 +1,6 @@
-import React from 'react';
+'use client'
+
+import React, { useEffect, useState } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -11,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { addDoc, collection } from "firebase/firestore";
-import { db } from "../firebase"
+import { db } from "../firebase";
+import { useSession } from 'next-auth/react';
 
 const formSchema = z.object({
     name: z.string().min(1, "Product Name is required"),
@@ -27,6 +30,25 @@ interface ProductFormProps {
 }
 
 export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
+    const { data: session, status } = useSession(); // Using NextAuth session
+    const [userEmail, setUserEmail] = useState<string | null>(null);
+    const [loading, setLoading] = useState<boolean>(status === 'loading');
+
+    useEffect(() => {
+        if (status === 'loading') {
+            // While loading, do nothing
+            return;
+        }
+
+        if (session?.user?.email) {
+            setUserEmail(session.user.email); // Use email as unique identifier
+        } else {
+            setUserEmail(null);
+        }
+
+        setLoading(false);
+    }, [session, status]);
+
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -39,29 +61,31 @@ export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
         },
     });
 
+    if (loading) {
+        return <div>Loading authentication state...</div>;
+    }
+
+    if (!userEmail) {
+        return <div>User not logged in</div>;
+    }
+
     async function onSubmit(values: z.infer<typeof formSchema>) {
+        if (!userEmail) {
+            console.error("User email is not available");
+            return;
+        }
+
+        // Add the user's info (email)
+        const productData = {
+            ...values,
+            expirationDate: values.expirationDate.toISOString(),
+            userEmail, // Associate product with userEmail
+        };
+
         try {
-            const formattedValues = {
-                ...values,
-                expirationDate: values.expirationDate ? values.expirationDate.toISOString() : null,
-            };
-
-            const { name, expirationDate, category, itemNumber, discountType, imageUrl } = formattedValues;
-
-            const docRef = await addDoc(collection(db, "products"), {
-                name,
-                expirationDate,
-                category,
-                itemNumber,
-                discountType,
-                imageUrl,
-            });
-
+            const docRef = await addDoc(collection(db, "products"), productData);
             console.log("Document written with ID: ", docRef.id);
-            if (onSubmitSuccess) {
-                onSubmitSuccess(); // Optional callback for success handling
-            }
-
+            if (onSubmitSuccess) onSubmitSuccess();
         } catch (error) {
             console.error("Error adding document: ", error);
         }
@@ -200,7 +224,9 @@ export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
                     )}
                 />
 
-                <Button type="submit">Add Product</Button>
+                <Button type="submit" disabled={loading || !userEmail}>
+                    {loading ? "Loading..." : "Add Product"}
+                </Button>
             </form>
         </Form>
     );

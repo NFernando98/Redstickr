@@ -28,4 +28,3 @@ export async function fetchUserId(sessionToken: string): Promise<string> {
     throw error; // Re-throw the error to handle it at the calling function
   }
 }
-

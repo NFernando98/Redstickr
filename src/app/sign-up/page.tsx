@@ -2,7 +2,7 @@
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { auth } from '../../firebase';
+import { auth } from '../../firebase'; // Make sure this import is correct
 
 export default function Signup() {
     const [email, setEmail] = useState('');
@@ -16,13 +16,23 @@ export default function Signup() {
         setError(null);
         setSuccess(null);
 
+        if (password !== passwordAgain) {
+            setError('Passwords do not match.');
+            return;
+        }
+
         try {
-            await createUserWithEmailAndPassword(auth, email, password);
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            console.log('User created successfully:', userCredential.user);
             setSuccess('Sign up successful! Redirecting...');
             setTimeout(() => {
                 router.push('/sign-in'); // Redirect to login or another page after successful sign-up
             }, 2000);
         } catch (error: unknown) {
+            // Log the error to the console to understand what is going wrong
+            console.error('Sign up error:', error);
+
+            // Handle Firebase errors specifically
             if (error instanceof Error) {
                 setError(error.message || 'An unknown error occurred during sign up.');
             } else {
@@ -104,7 +114,7 @@ export default function Signup() {
 
                         <div>
                             <button
-                                disabled={(!email || !password || !passwordAgain) || (password !== passwordAgain)}
+                                disabled={!email || !password || !passwordAgain || password !== passwordAgain}
                                 onClick={() => signup()}
                                 className="disabled:opacity-40 flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                             >

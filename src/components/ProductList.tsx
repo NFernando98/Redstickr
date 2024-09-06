@@ -20,15 +20,16 @@ export default function ProductList() {
     const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
-        if (!session?.user?.email) {
+        // Check if the user is logged in and has a userId
+        const userId = session?.user?.id;
+
+        if (!userId) {
             setLoading(false);
             return;
         }
 
-        const userEmail = session.user.email;
-
-        // Query products for the logged-in user's email
-        const productsQuery = query(collection(db, "products"), where("userEmail", "==", userEmail));
+        // Query products for the logged-in user's userId
+        const productsQuery = query(collection(db, "products"), where("userId", "==", userId));
 
         // Set up a real-time listener
         const unsubscribe = onSnapshot(productsQuery, (snapshot) => {
@@ -39,7 +40,7 @@ export default function ProductList() {
 
         // Cleanup listener on unmount
         return () => unsubscribe();
-    }, [session?.user?.email]);
+    }, [session?.user?.id]);
 
     if (loading) {
         return <div>Loading products...</div>;

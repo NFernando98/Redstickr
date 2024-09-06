@@ -1,27 +1,44 @@
-'use client'
+'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
-import { addDoc, collection } from "firebase/firestore";
-import { db } from "../firebase";
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from '@/components/ui/form';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Calendar } from '@/components/ui/calendar';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '../firebase';
 import { useSession } from 'next-auth/react';
 
 const formSchema = z.object({
-    name: z.string().min(1, "Product Name is required"),
+    name: z.string().min(1, 'Product Name is required'),
     expirationDate: z.date(),
-    category: z.string().min(1, "Category is required"),
-    itemNumber: z.string().min(1, "Item Number is required"),
-    discountType: z.string().min(1, "Discount Type is required"),
+    category: z.string().min(1, 'Category is required'),
+    itemNumber: z.string().min(1, 'Item Number is required'),
+    discountType: z.string().min(1, 'Discount Type is required'),
     imageUrl: z.string(),
 });
 
@@ -31,19 +48,19 @@ interface ProductFormProps {
 
 export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
     const { data: session, status } = useSession(); // Using NextAuth session
-    const [userEmail, setUserEmail] = useState<string | null>(null);
+    const [userId, setUserId] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(status === 'loading');
 
     useEffect(() => {
         if (status === 'loading') {
-            // While loading, do nothing
             return;
         }
 
-        if (session?.user?.email) {
-            setUserEmail(session.user.email); // Use email as unique identifier
+        // Now you can safely use session.user.id
+        if (session?.user?.id) {
+            setUserId(session.user.id);
         } else {
-            setUserEmail(null);
+            setUserId(null);
         }
 
         setLoading(false);
@@ -52,12 +69,12 @@ export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            name: "",
+            name: '',
             expirationDate: new Date(),
-            category: "",
-            itemNumber: "",
-            discountType: "",
-            imageUrl: "",
+            category: '',
+            itemNumber: '',
+            discountType: '',
+            imageUrl: '',
         },
     });
 
@@ -65,29 +82,29 @@ export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
         return <div>Loading authentication state...</div>;
     }
 
-    if (!userEmail) {
+    if (!userId) {
         return <div>User not logged in</div>;
     }
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        if (!userEmail) {
-            console.error("User email is not available");
+        if (!userId) {
+            console.error('User ID is not available');
             return;
         }
 
-        // Add the user's info (email)
+        // Add the user's info (uid)
         const productData = {
             ...values,
             expirationDate: values.expirationDate.toISOString(),
-            userEmail, // Associate product with userEmail
+            userId, // Associate product with userId
         };
 
         try {
-            const docRef = await addDoc(collection(db, "products"), productData);
-            console.log("Document written with ID: ", docRef.id);
+            const docRef = await addDoc(collection(db, 'products'), productData);
+            console.log('Document written with ID: ', docRef.id);
             if (onSubmitSuccess) onSubmitSuccess();
         } catch (error) {
-            console.error("Error adding document: ", error);
+            console.error('Error adding document: ', error);
         }
     }
 
@@ -224,9 +241,10 @@ export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
                     )}
                 />
 
-                <Button type="submit" disabled={loading || !userEmail}>
+                <Button type="submit" disabled={loading || !userId}>
                     {loading ? "Loading..." : "Add Product"}
                 </Button>
+
             </form>
         </Form>
     );

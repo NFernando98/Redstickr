@@ -4,6 +4,7 @@ import './globals.css';
 import { Inter } from 'next/font/google';
 import SessionProvider from './SessionProvider';
 import Login from '../components/Login';
+import Home from './page';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -18,17 +19,11 @@ export default async function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <SessionProvider session={session}>
-          {!session ? (
-            <Login />
-          ) : (
-            <>
-              {/* Render children based on the route */}
+         
               {children}
-            </>
-          )}
+          
         </SessionProvider>
       </body>
     </html>
   );
 }
-

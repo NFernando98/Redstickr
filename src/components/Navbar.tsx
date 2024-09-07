@@ -37,7 +37,7 @@ const Navbar: FC<NavbarProps> = ({ children }) => {
               </div>
               <div className="ml-6 flex space-x-8">
                 <Link href="/expired-products" className="inline-flex items-center px-1 pt-1 border-b-2 text-xl font-medium">
-                  Expired Items
+                  Expired Products
                 </Link>
                 <Link href="/all-products" className="inline-flex items-center px-1 pt-1 border-b-2 text-xl font-medium">
                   All Products

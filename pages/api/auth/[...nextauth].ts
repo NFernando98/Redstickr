@@ -1,16 +1,12 @@
-// pages/api/auth/[...nextauth].ts
 import NextAuth, { NextAuthOptions, Session, User } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import CredentialsProvider from "next-auth/providers/credentials";
 import { FirestoreAdapter } from "@auth/firebase-adapter";
 import { cert } from "firebase-admin/app";
 import {
-  getAuth,
-  signInWithEmailAndPassword,
   fetchSignInMethodsForEmail,
-  EmailAuthProvider,
-  linkWithCredential,
+  getAuth,
   GoogleAuthProvider,
+  linkWithCredential,
   signInWithPopup,
 } from "firebase/auth";
 import { app } from "../../../src/firebase"; // Ensure this path is correct
@@ -71,61 +67,6 @@ export const authOptions: NextAuthOptions = {
           email: profile.email,
           image: profile.picture,
         };
-      },
-    }),
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "text", placeholder: "you@example.com" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        try {
-          // Sign in with Firebase Auth using email and password
-          const userCredential = await signInWithEmailAndPassword(
-            auth,
-            credentials?.email || "",
-            credentials?.password || ""
-          );
-
-          const existingProviders = await fetchSignInMethodsForEmail(
-            auth,
-            credentials?.email || ""
-          );
-
-          // Check if Google is an existing provider and link accounts
-          if (
-            existingProviders.includes(GoogleAuthProvider.PROVIDER_ID) &&
-            auth.currentUser
-          ) {
-            const googleProvider = new GoogleAuthProvider();
-            const result = await signInWithPopup(auth, googleProvider);
-
-            // Extract AuthCredential from the result
-            const googleCredential =
-              GoogleAuthProvider.credentialFromResult(result);
-
-            if (googleCredential) {
-              try {
-                await linkWithCredential(auth.currentUser, googleCredential);
-                console.log("Successfully linked Google account.");
-              } catch (linkError) {
-                console.error("Error linking Google account:", linkError);
-              }
-            } else {
-              console.error("Failed to obtain Google credentials.");
-            }
-          }
-
-          return {
-            id: userCredential.user.uid,
-            email: userCredential.user.email,
-            name: userCredential.user.displayName || userCredential.user.email,
-          };
-        } catch (error) {
-          console.error("Error during account linking:", error);
-          throw new Error("Failed to authenticate. Please try again.");
-        }
       },
     }),
   ],

@@ -4,32 +4,15 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useSession } from 'next-auth/react';
 
@@ -47,22 +30,13 @@ interface ProductFormProps {
 }
 
 export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
-    const { data: session, status } = useSession(); // Using NextAuth session
+    const { data: session, status } = useSession();
     const [userId, setUserId] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(status === 'loading');
 
     useEffect(() => {
-        if (status === 'loading') {
-            return;
-        }
-
-        // Now you can safely use session.user.id
-        if (session?.user?.id) {
-            setUserId(session.user.id);
-        } else {
-            setUserId(null);
-        }
-
+        if (status === 'loading') return;
+        setUserId(session?.user?.id ?? null);
         setLoading(false);
     }, [session, status]);
 
@@ -78,30 +52,21 @@ export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
         },
     });
 
-    if (loading) {
-        return <div>Loading authentication state...</div>;
-    }
+    if (loading) return <div>Loading authentication state...</div>;
 
-    if (!userId) {
-        return <div>User not logged in</div>;
-    }
+    if (!userId) return <div>User not logged in</div>;
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        if (!userId) {
-            console.error('User ID is not available');
-            return;
-        }
+        if (!userId) return console.error('User ID is not available');
 
-        // Add the user's info (uid)
         const productData = {
             ...values,
-            expirationDate: values.expirationDate.toISOString(),
-            userId, // Associate product with userId
+            expirationDate: Timestamp.fromDate(values.expirationDate), // Convert to Firestore Timestamp
+            userId,
         };
 
         try {
-            const docRef = await addDoc(collection(db, 'products'), productData);
-            console.log('Document written with ID: ', docRef.id);
+            await addDoc(collection(db, 'products'), productData);
             if (onSubmitSuccess) onSubmitSuccess();
         } catch (error) {
             console.error('Error adding document: ', error);
@@ -151,7 +116,11 @@ export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
                                     <Calendar
                                         mode="single"
                                         selected={field.value}
-                                        onSelect={field.onChange}
+                                        onSelect={(date) => {
+                                            if (date) {
+                                                field.onChange(date);
+                                            }
+                                        }}
                                         disabled={(date) =>
                                             date < new Date() || date < new Date("1900-01-01")
                                         }
@@ -244,7 +213,6 @@ export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
                 <Button type="submit" disabled={loading || !userId}>
                     {loading ? "Loading..." : "Add Product"}
                 </Button>
-
             </form>
         </Form>
     );

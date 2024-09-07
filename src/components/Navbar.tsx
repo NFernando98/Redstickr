@@ -30,14 +30,16 @@ const Navbar: FC<NavbarProps> = ({ children }) => {
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <span className="text-4xl font-bold text-black-600">Red</span>
-                <span className="text-4xl font-bold text-red-600">Sticker</span>
+                <Link href="/" className="flex items-center">
+                  <span className="text-4xl font-bold text-black-600">Red</span>
+                  <span className="text-4xl font-bold text-red-600">Sticker</span>
+                </Link>
               </div>
               <div className="ml-6 flex space-x-8">
-                <Link href="/" className="inline-flex items-center px-1 pt-1 border-b-2 text-xl font-medium">
+                <Link href="/expired-products" className="inline-flex items-center px-1 pt-1 border-b-2 text-xl font-medium">
                   Expired Items
                 </Link>
-                <Link href="/allproducts" className="inline-flex items-center px-1 pt-1 border-b-2 text-xl font-medium">
+                <Link href="/all-products" className="inline-flex items-center px-1 pt-1 border-b-2 text-xl font-medium">
                   All Products
                 </Link>
               </div>

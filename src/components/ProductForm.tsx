@@ -1,24 +1,27 @@
-import React from 'react';
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
-import { addDoc, collection } from "firebase/firestore";
-import { db } from "../firebase"
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { addDoc, collection, Timestamp } from 'firebase/firestore';
+import { db } from '../firebase';
+import { useSession } from 'next-auth/react';
 
 const formSchema = z.object({
-    name: z.string().min(1, "Product Name is required"),
+    name: z.string().min(1, 'Product Name is required'),
     expirationDate: z.date(),
-    category: z.string().min(1, "Category is required"),
-    itemNumber: z.string().min(1, "Item Number is required"),
-    discountType: z.string().min(1, "Discount Type is required"),
+    category: z.string().min(1, 'Category is required'),
+    itemNumber: z.string().min(1, 'Item Number is required'),
+    discountType: z.string().min(1, 'Discount Type is required'),
     imageUrl: z.string(),
 });
 
@@ -27,43 +30,46 @@ interface ProductFormProps {
 }
 
 export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
+    const { data: session, status } = useSession();
+    const [userId, setUserId] = useState<string | null>(null);
+    const [loading, setLoading] = useState<boolean>(status === 'loading');
+
+    useEffect(() => {
+        if (status === 'loading') return;
+        setUserId(session?.user?.id ?? null);
+        setLoading(false);
+    }, [session, status]);
+
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            name: "",
+            name: '',
             expirationDate: new Date(),
-            category: "",
-            itemNumber: "",
-            discountType: "",
-            imageUrl: "",
+            category: '',
+            itemNumber: '',
+            discountType: '',
+            imageUrl: '',
         },
     });
 
+    if (loading) return <div>Loading authentication state...</div>;
+
+    if (!userId) return <div>User not logged in</div>;
+
     async function onSubmit(values: z.infer<typeof formSchema>) {
+        if (!userId) return console.error('User ID is not available');
+
+        const productData = {
+            ...values,
+            expirationDate: Timestamp.fromDate(values.expirationDate), // Convert to Firestore Timestamp
+            userId,
+        };
+
         try {
-            const formattedValues = {
-                ...values,
-                expirationDate: values.expirationDate ? values.expirationDate.toISOString() : null,
-            };
-
-            const { name, expirationDate, category, itemNumber, discountType, imageUrl } = formattedValues;
-
-            const docRef = await addDoc(collection(db, "products"), {
-                name,
-                expirationDate,
-                category,
-                itemNumber,
-                discountType,
-                imageUrl,
-            });
-
-            console.log("Document written with ID: ", docRef.id);
-            if (onSubmitSuccess) {
-                onSubmitSuccess(); // Optional callback for success handling
-            }
-
+            await addDoc(collection(db, 'products'), productData);
+            if (onSubmitSuccess) onSubmitSuccess();
         } catch (error) {
-            console.error("Error adding document: ", error);
+            console.error('Error adding document: ', error);
         }
     }
 
@@ -110,7 +116,11 @@ export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
                                     <Calendar
                                         mode="single"
                                         selected={field.value}
-                                        onSelect={field.onChange}
+                                        onSelect={(date) => {
+                                            if (date) {
+                                                field.onChange(date);
+                                            }
+                                        }}
                                         disabled={(date) =>
                                             date < new Date() || date < new Date("1900-01-01")
                                         }
@@ -200,7 +210,9 @@ export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
                     )}
                 />
 
-                <Button type="submit">Add Product</Button>
+                <Button type="submit" disabled={loading || !userId}>
+                    {loading ? "Loading..." : "Add Product"}
+                </Button>
             </form>
         </Form>
     );

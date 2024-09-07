@@ -1,16 +1,15 @@
-"use client";
-
 import { FC } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 // import UpdateProductModal from './UpdateProductModal';
+import { Timestamp } from 'firebase/firestore';
 
 interface ProductCardProps {
   product: {
     id: string;
     name: string;
-    expirationDate: string;
+    expirationDate: Timestamp | string; // Allow both Timestamp and string
     discountType: string;
     itemNumber: string;
     imageUrl?: string;
@@ -19,8 +18,12 @@ interface ProductCardProps {
 }
 
 const ProductCard: FC<ProductCardProps> = ({ product }) => {
-  const isExpired = new Date(product.expirationDate) < new Date();
-  const expirationDate = new Date(product.expirationDate);
+  // Convert Firestore Timestamp to JavaScript Date if needed
+  const expirationDate = typeof product.expirationDate === 'string'
+    ? new Date(product.expirationDate)
+    : product.expirationDate.toDate(); // Assuming it's a Firestore Timestamp
+
+  const isExpired = expirationDate < new Date();
   const daysLeft = Math.ceil((expirationDate.getTime() - new Date().getTime()) / (1000 * 3600 * 24));
 
   const getDiscountColor = (discountType: string) => {
@@ -44,7 +47,7 @@ const ProductCard: FC<ProductCardProps> = ({ product }) => {
       </CardHeader>
       <CardContent className="p-4">
         <div className="flex">
-          <img src={product.imageUrl || '/placeholder-image.jpg'} alt={product.name} className="w-1/3 h-auto object-cover mr-4"/>
+          <img src={product.imageUrl || '/placeholder-image.jpg'} alt={product.name} className="w-1/3 h-auto object-cover mr-4" />
           <div className="flex-1">
             <p className="font-bold text-md mb-1">{expirationDate.toLocaleDateString()}</p>
             <p className="text-sm mb-1">{product.itemNumber}</p>

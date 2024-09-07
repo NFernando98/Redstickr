@@ -1,5 +1,4 @@
-'use client';
-
+// src/components/ProductForm.tsx
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,8 +11,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
-import { addDoc, collection, Timestamp } from 'firebase/firestore';
-import { db } from '../firebase';
 import { useSession } from 'next-auth/react';
 
 const formSchema = z.object({
@@ -22,8 +19,10 @@ const formSchema = z.object({
     category: z.string().min(1, 'Category is required'),
     itemNumber: z.string().min(1, 'Item Number is required'),
     discountType: z.string().min(1, 'Discount Type is required'),
-    imageUrl: z.string(),
+    imageUrl: z.string().optional(),
 });
+
+type FormValues = z.infer<typeof formSchema>;
 
 interface ProductFormProps {
     onSubmitSuccess?: () => void;
@@ -40,7 +39,7 @@ export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
         setLoading(false);
     }, [session, status]);
 
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: '',
@@ -56,22 +55,24 @@ export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
 
     if (!userId) return <div>User not logged in</div>;
 
-    async function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(values: FormValues) {
         if (!userId) return console.error('User ID is not available');
 
-        const productData = {
-            ...values,
-            expirationDate: Timestamp.fromDate(values.expirationDate), // Convert to Firestore Timestamp
-            userId,
-        };
-
         try {
-            await addDoc(collection(db, 'products'), productData);
+            const response = await fetch('/api/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...values, userId }),
+            });
+
+            if (!response.ok) throw new Error('Network response was not ok');
+
             if (onSubmitSuccess) onSubmitSuccess();
         } catch (error) {
-            console.error('Error adding document: ', error);
+            console.error('Error adding product:', error);
         }
     }
+
 
     return (
         <Form {...form}>

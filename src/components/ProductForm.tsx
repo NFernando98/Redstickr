@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { Timestamp } from 'firebase/firestore';
 
 const formSchema = z.object({
     name: z.string().min(1, 'Product Name is required'),
@@ -25,10 +26,19 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface ProductFormProps {
+    product?: {
+        id: string;
+        name: string;
+        expirationDate: Timestamp | string;
+        discountType: string;
+        itemNumber: string;
+        imageUrl?: string;
+        category: string;
+    };
     onSubmitSuccess?: () => void;
 }
 
-export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
+export default function ProductForm({ product, onSubmitSuccess }: ProductFormProps) {
     const { data: session, status } = useSession();
     const [userId, setUserId] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(status === 'loading');
@@ -42,12 +52,14 @@ export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            name: '',
-            expirationDate: new Date(),
-            category: '',
-            itemNumber: '',
-            discountType: '',
-            imageUrl: '',
+            name: product?.name || "",
+            expirationDate: typeof product?.expirationDate === 'string'
+            ? new Date(product?.expirationDate)
+            : product?.expirationDate.toDate(),
+            category: product?.category || "",
+            itemNumber: product?.itemNumber || "",
+            discountType: product?.discountType || "",
+            imageUrl: product?.imageUrl || "",
         },
     });
 
@@ -59,8 +71,11 @@ export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
         if (!userId) return console.error('User ID is not available');
 
         try {
-            const response = await fetch('/api/products', {
-                method: 'POST',
+            const url = product ? `/api/products/${product.id}` : '/api/products';
+            const method = product ? 'PATCH' : 'POST';
+
+            const response = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...values, userId }),
             });
@@ -69,10 +84,9 @@ export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
 
             if (onSubmitSuccess) onSubmitSuccess();
         } catch (error) {
-            console.error('Error adding product:', error);
+            console.error('Error submitting product:', error);
         }
     }
-
 
     return (
         <Form {...form}>
@@ -190,6 +204,7 @@ export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
                                     <SelectItem value="20% Off">20% Off</SelectItem>
                                     <SelectItem value="35% Off">35% Off</SelectItem>
                                     <SelectItem value="50% Off">50% Off</SelectItem>
+                                    {product ? <SelectItem value="expired">Expired</SelectItem> : ""}
                                 </SelectContent>
                             </Select>
                             <FormMessage />
@@ -211,9 +226,7 @@ export default function ProductForm({ onSubmitSuccess }: ProductFormProps) {
                     )}
                 />
 
-                <Button type="submit" disabled={loading || !userId}>
-                    {loading ? "Loading..." : "Add Product"}
-                </Button>
+                <Button type="submit">{product ? 'Update Product' : 'Add Product'}</Button>
             </form>
         </Form>
     );

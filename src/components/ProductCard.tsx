@@ -2,7 +2,7 @@ import { FC } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-// import UpdateProductModal from './UpdateProductModal';
+import AddProductModal from './AddProductModal';
 import { Timestamp } from 'firebase/firestore';
 
 interface ProductCardProps {
@@ -35,6 +35,21 @@ const ProductCard: FC<ProductCardProps> = ({ product }) => {
     }
   };
 
+  async function onDelete() {
+    if (!product || !product.id) return;
+
+    try {
+      const response = await fetch(`/api/products/${product.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Network response was not ok');
+
+    } catch (error) {
+      console.error('Error deleting product:', error);
+    }
+  }
+
   return (
     <Card className={`mb-4 ${isExpired ? 'border-red-500' : ''}`}>
       <CardHeader>
@@ -53,9 +68,11 @@ const ProductCard: FC<ProductCardProps> = ({ product }) => {
             <p className="text-sm mb-1">{product.itemNumber}</p>
             {isExpired ? "" : <p className="text-sm mb-2">{daysLeft} days left</p>}
             <div className="flex space-x-2">
-              <Button variant="secondary" size="sm">Delete</Button>
-              <Button variant="secondary" size="sm">Update</Button>
-              {/* {product.discountType !== "expired" && <UpdateProductModal product={product}/>} */}
+              {/* <Button variant="secondary" size="sm">Delete</Button> */}
+              <Button type="button" variant="destructive" onClick={onDelete}>
+                Delete
+              </Button>
+              {product.discountType !== "expired" && <AddProductModal product={product} />}
             </div>
           </div>
         </div>

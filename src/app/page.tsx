@@ -1,13 +1,13 @@
 'use client';
 
 import Navbar from '@/components/Navbar';
+import LandingPage from '@/components/LandingPage';
 
-export default function ProductListPage() {
+export default function Home() {
+
   return (
     <Navbar>
-      <div className="flex items-center justify-center min-h-screen">
-        <h1 className="text-6xl font-bold">Welcome to RedSticker!</h1>
-      </div>
+      <LandingPage />
     </Navbar>
   );
 }

@@ -15,7 +15,9 @@ const isTimestamp = (date: any): date is Timestamp => {
 };
 
 interface GroupedProducts {
-    [category: string]: Product[];
+    [category: string]: {
+        [discountType: string]: Product[];
+    };
 }
 
 export default function ProductList() {
@@ -47,10 +49,13 @@ export default function ProductList() {
                 return { ...data, id: doc.id };
             });
 
-            // Filter for products with discount type "expired"
-            const expiredProducts = productsList.filter(product => 
-                product.discountType.toLowerCase() === "expired"
-            );
+            // Filter out expired products
+            const expiredProducts = productsList.filter(product => {
+                const expirationDate = isTimestamp(product.expirationDate)
+                    ? product.expirationDate.toDate()
+                    : new Date(product.expirationDate);
+                return expirationDate < now;
+            });
 
             console.log('Fetched Products:', expiredProducts);
             setProducts(expiredProducts);
@@ -68,15 +73,19 @@ export default function ProductList() {
         return <div>Loading products...</div>;
     }
 
-    // Group expired products by category
+    // Group products by category and discount type
     const groupedProducts: GroupedProducts = products.reduce((acc: GroupedProducts, product) => {
-        const { category } = product;
+        const { category, discountType } = product;
 
         if (!acc[category]) {
-            acc[category] = [];
+            acc[category] = {};
         }
 
-        acc[category].push(product);
+        if (!acc[category][discountType]) {
+            acc[category][discountType] = [];
+        }
+
+        acc[category][discountType].push(product);
 
         return acc;
     }, {} as GroupedProducts);
@@ -86,17 +95,22 @@ export default function ProductList() {
     return (
         <Navbar>
             <h1 className="text-4xl font-bold mb-6">Expired Items</h1>
-            <div className="mt-8">
+            <div className="mt-8"> {/* Add vertical space here */}
                 <Accordion type="single" collapsible className="w-full">
                     {categories.map(category => (
                         <AccordionItem key={category} value={category} className="text-3xl font-bold mb-4">
                             <AccordionTrigger>{category}</AccordionTrigger>
                             <AccordionContent>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {groupedProducts[category].map(product => (
-                                        <ProductCard key={product.id} product={product} />
-                                    ))}
-                                </div>
+                                {Object.entries(groupedProducts[category]).map(([discountType, products]) => (
+                                    <div key={discountType} className='mb-2'>
+                                        <h2 className="text-2xl font-semibold mb-2">{discountType}</h2>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {products.map(product => (
+                                                <ProductCard key={product.id} product={product} />
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
                             </AccordionContent>
                         </AccordionItem>
                     ))}

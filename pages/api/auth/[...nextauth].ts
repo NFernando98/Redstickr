@@ -29,7 +29,7 @@ export const authOptions: NextAuthOptions = {
             profile.email
           );
 
-          // Check if Google provider is already linked
+          // Check if Google provider is already linkedd
           if (!existingMethods.includes(GoogleAuthProvider.PROVIDER_ID)) {
             // If the user is already authenticated, link the Google provider
             if (auth.currentUser) {

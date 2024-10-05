@@ -68,41 +68,9 @@ export default function ProductList() {
         return acc;
     }, {} as GroupedProducts);
 
-    // const groupedProducts: GroupedProducts = products.reduce((acc: GroupedProducts, product) => {
-    //     const { category, discountType } = product;
-
-    //     // Skip products with "expired" discount type
-    //     if (discountType.toLowerCase() === "expired") {
-    //         return acc;
-    //     }
-
-    //     if (!acc[category]) {
-    //         acc[category] = [];
-    //     }
-
-    //     acc[category].push(product);
-
-    //     return acc;
-    // }, {} as GroupedProducts);
-
     const categories = Object.keys(groupedProducts);
 
     return (
-        // <Accordion type="single" collapsible className="w-full">
-        //     {categories.map(category => (
-        //         <AccordionItem key={category} value={category} className="text-3xl font-bold mb-4">
-        //             <AccordionTrigger>{category}</AccordionTrigger>
-        //             <AccordionContent>
-        //                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        //                     {groupedProducts[category].map(product => (
-        //                         <ProductCard key={product.id} product={product} />
-        //                     ))}
-        //                 </div>
-        //             </AccordionContent>
-        //         </AccordionItem>
-        //     ))}
-        // </Accordion>
-
         <div>
             <div className="mb-4">
                 <SearchBar

@@ -38,7 +38,7 @@ export default function NotificationContent() {
                 <h3 className="text-xl font-bold text-gray-900">Product Stickers to Update</h3>
 
                 {productDiscountTypeToUpdate.length > 0 ? (
-                    <ul className="mt-4 space-y-3 max-h-50 overflow-y-auto px-2"> {/* Added padding */}
+                    <ul className="mt-4 space-y-4 max-h-64 overflow-y-auto px-2"> {/* Added padding */}
                         {productDiscountTypeToUpdate.map((product, index) => (
                             <li
                                 key={index}

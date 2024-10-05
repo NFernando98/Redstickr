@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import ProductForm from "./ProductForm";
 import { Timestamp } from 'firebase/firestore';
+import DiscountLabels from './DiscountLabels';
 
 interface AddProductModalProps {
   product?: {
@@ -33,10 +34,13 @@ export default function AddProductModal({ product }: AddProductModalProps) {
         {product ? (<Button variant="secondary" size="sm">Update</Button>) :
           (<Button variant="default">+ Add New Product</Button>)}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>{product ? "Update Product" : "Add New Product"}</DialogTitle>
         </DialogHeader>
+        <div className="flex justify-center w-full">
+          <DiscountLabels />
+        </div>
         <ProductForm product={product} onSubmitSuccess={handleFormSubmit} />
       </DialogContent>
     </Dialog>

@@ -7,7 +7,6 @@ import { Product } from '../types/product';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/firebase';
 import { useSession } from 'next-auth/react'; // Import useSession from next-auth
-import { Input } from "@/components/ui/input";
 import SearchBar from '@/components/SearchBar';
 
 interface GroupedProducts {

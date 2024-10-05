@@ -38,7 +38,7 @@ export default function NotificationContent() {
                 <h3 className="text-xl font-bold text-gray-900">Product Stickers to Update</h3>
 
                 {productDiscountTypeToUpdate.length > 0 ? (
-                    <ul className="mt-4 space-y-4 max-h-64 overflow-y-auto px-2"> {/* Added padding */}
+                    <ul className="mt-4 space-y-3 max-h-96 overflow-y-auto pr-4"> {/* Adjusted padding for scroll bar */}
                         {productDiscountTypeToUpdate.map((product, index) => (
                             <li
                                 key={index}
@@ -47,7 +47,7 @@ export default function NotificationContent() {
                                 <div className="font-medium text-gray-700">
                                     {product.name} <span className="text-gray-500">({product.category})</span>
                                 </div>
-                                <div className="text-right text-gray-600">
+                                <div className="text-right text-gray-600 whitespace-nowrap"> {/* Prevent line breaks */}
                                     <div>Current: {product.discountType}</div>
                                     <div className="text-red-600">Should be: {product.expectedDiscount}</div>
                                 </div>
@@ -58,8 +58,6 @@ export default function NotificationContent() {
                     <p className="mt-4 text-gray-500">No products need discount updates.</p>
                 )}
             </PopoverContent>
-
-
 
         </div>
     );

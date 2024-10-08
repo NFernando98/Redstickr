@@ -13,6 +13,8 @@ import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { Timestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '@/firebase';
 
 const formSchema = z.object({
     name: z.string().min(1, 'Product Name is required'),
@@ -42,6 +44,7 @@ export default function ProductForm({ product, onSubmitSuccess }: ProductFormPro
     const { data: session, status } = useSession();
     const [userId, setUserId] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(status === 'loading');
+    const [imageFile, setImageFile] = useState<File | null>(null);
 
     useEffect(() => {
         if (status === 'loading') return;
@@ -54,14 +57,26 @@ export default function ProductForm({ product, onSubmitSuccess }: ProductFormPro
         defaultValues: {
             name: product?.name || "",
             expirationDate: typeof product?.expirationDate === 'string'
-            ? new Date(product?.expirationDate)
-            : product?.expirationDate.toDate(),
+                ? new Date(product?.expirationDate)
+                : product?.expirationDate.toDate(),
             category: product?.category || "",
             itemNumber: product?.itemNumber || "",
             discountType: product?.discountType || "",
             imageUrl: product?.imageUrl || "",
         },
     });
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setImageFile(e.target.files[0]);
+        }
+    };
+
+    async function uploadImage(file: File) {
+        const storageRef = ref(storage, `products/${file.name}`); // Create a reference to the file
+        await uploadBytes(storageRef, file); // Upload the file
+        return await getDownloadURL(storageRef); // Get the download URL
+    }
 
     if (loading) return <div>Loading authentication state...</div>;
 
@@ -70,6 +85,11 @@ export default function ProductForm({ product, onSubmitSuccess }: ProductFormPro
     async function onSubmit(values: FormValues) {
         if (!userId) return console.error('User ID is not available');
 
+        let imageUrl = '';
+        if (imageFile) {
+            imageUrl = await uploadImage(imageFile); // Upload the image and get the URL
+        }
+
         try {
             const url = product ? `/api/products/${product.id}` : '/api/products';
             const method = product ? 'PATCH' : 'POST';
@@ -77,7 +97,7 @@ export default function ProductForm({ product, onSubmitSuccess }: ProductFormPro
             const response = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...values, userId }),
+                body: JSON.stringify({ ...values, userId, imageUrl }),
             });
 
             if (!response.ok) throw new Error('Network response was not ok');
@@ -219,7 +239,7 @@ export default function ProductForm({ product, onSubmitSuccess }: ProductFormPro
                         <FormItem>
                             <FormLabel>Upload Image</FormLabel>
                             <FormControl>
-                                <Input id="picture" type="file" />
+                                <Input id="picture" type="file" onChange={handleImageChange} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

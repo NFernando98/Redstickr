@@ -15,6 +15,7 @@ import { useSession } from 'next-auth/react';
 import { Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/firebase';
+import imageCompression from 'browser-image-compression';
 
 const formSchema = z.object({
     name: z.string().min(1, 'Product Name is required'),
@@ -66,22 +67,83 @@ export default function ProductForm({ product, onSubmitSuccess }: ProductFormPro
         },
     });
 
+    // Handle image file selection
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             setImageFile(e.target.files[0]);
         }
     };
 
+    async function resizeImage(file: File, width: number, height: number): Promise<File> {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const reader = new FileReader();
+
+            reader.onload = (event) => {
+                img.src = event.target?.result as string;
+            };
+
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+
+                if (ctx) {
+                    // Draw the resized image on the canvas
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Convert the canvas to a Blob
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            // Convert Blob to File
+                            const resizedFile = new File([blob], file.name, {
+                                type: file.type,
+                                lastModified: Date.now(),
+                            });
+                            resolve(resizedFile);
+                        } else {
+                            reject(new Error("Canvas to Blob conversion failed."));
+                        }
+                    }, file.type);
+                }
+            };
+
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Upload image to Firebase Storage
     async function uploadImage(file: File) {
-        const storageRef = ref(storage, `products/${file.name}`); // Create a reference to the file
-        await uploadBytes(storageRef, file); // Upload the file
-        return await getDownloadURL(storageRef); // Get the download URL
+        try {
+            // Resize the image to 200x200
+            const resizedFile = await resizeImage(file, 200, 200);
+
+            // Options for image compression
+            const options = {
+                maxSizeMB: 1,
+                useWebWorker: true,
+            };
+
+            // Compress the image
+            const compressedFile = await imageCompression(resizedFile, options);
+
+            // Upload the compressed image to Firebase Storage
+            const storageRef = ref(storage, `products/${compressedFile.name}`);
+            await uploadBytes(storageRef, compressedFile);
+
+            // Get the download URL for the uploaded image
+            return await getDownloadURL(storageRef);
+        } catch (error) {
+            console.error("Error uploading the image:", error);
+            throw error;
+        }
     }
 
     if (loading) return <div>Loading authentication state...</div>;
-
     if (!userId) return <div>User not logged in</div>;
 
+    // Form submission
     async function onSubmit(values: FormValues) {
         if (!userId) return console.error('User ID is not available');
 
@@ -102,7 +164,7 @@ export default function ProductForm({ product, onSubmitSuccess }: ProductFormPro
 
             if (!response.ok) throw new Error('Network response was not ok');
 
-            if (onSubmitSuccess) onSubmitSuccess();
+            if (onSubmitSuccess) onSubmitSuccess(); // Close the modal
         } catch (error) {
             console.error('Error submitting product:', error);
         }

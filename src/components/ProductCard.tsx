@@ -65,7 +65,7 @@ const ProductCard: FC<ProductCardProps> = ({ product }) => {
         <div className="flex">
           {/* Render the image from Firestore */}
           <Image
-            src={product.imageUrl || '/placeholder-image.jpg'} // Image URL from Firestore or fallback
+            src={product.imageUrl || '/placeholder.png'} // Image URL from Firestore or fallback
             alt={product.name}
             width={200} // Specify width and height for proper optimization
             height={200}

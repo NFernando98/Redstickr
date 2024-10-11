@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import AddProductModal from './AddProductModal';
 import { Timestamp } from 'firebase/firestore';
+import Image from 'next/image';
 
 interface ProductCardProps {
   product: {
@@ -62,7 +63,14 @@ const ProductCard: FC<ProductCardProps> = ({ product }) => {
       </CardHeader>
       <CardContent className="p-4">
         <div className="flex">
-          <img src={product.imageUrl || '/placeholder-image.jpg'} alt={product.name} className="w-1/3 h-auto object-cover mr-4" />
+          {/* Render the image from Firestore */}
+          <Image
+            src={product.imageUrl || '/placeholder.png'} // Image URL from Firestore or fallback
+            alt={product.name}
+            width={200} // Specify width and height for proper optimization
+            height={200}
+            className="w-1/3 h-auto object-cover mr-4" // Ensure the image fits properly in the layout
+          />
           <div className="flex-1">
             <p className="font-bold text-md mb-1">{expirationDate.toLocaleDateString()}</p>
             <p className="text-sm mb-1">{product.itemNumber}</p>
